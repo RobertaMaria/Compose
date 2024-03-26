@@ -1,4 +1,4 @@
-package com.guilhermegaspar.workout
+package com.guilhermegaspar.workout.presentation.view
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -7,14 +7,11 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -25,21 +22,32 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.VerticalAlignmentLine
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
+import coil.compose.rememberAsyncImagePainter
+import com.guilhermegaspar.workout.R
+import com.guilhermegaspar.workout.domain.entity.Result
+import com.guilhermegaspar.workout.presentation.viewmodel.WorkoutViewModel
 import com.guilhermegaspar.workout.ui.theme.WorkoutTheme
+import org.koin.androidx.viewmodel.ext.android.viewModel
 
 class MainActivity : ComponentActivity() {
+    private val viewModel: WorkoutViewModel by viewModel()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        viewModel.getExercise()
+        viewModel.getExerciseImage()
         setContent {
             WorkoutTheme {
                 // A surface container using the 'background' color from the theme
@@ -47,15 +55,17 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting("Android")
+                    Greeting("Android", viewModel = viewModel)
                 }
             }
         }
     }
+
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
+fun Greeting(name: String, modifier: Modifier = Modifier, viewModel: WorkoutViewModel) {
+    val collectAsState by viewModel.state.collectAsState()
     Column(Modifier.widthIn(200.dp)) {
         Row(
             Modifier
@@ -86,35 +96,75 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
             Text(text = "Categorias")
             Text(text = "View all")
         }
-//        Row(
-//            Modifier
-//                .padding(8.dp)
-//                .horizontalScroll(rememberScrollState()),
-//            horizontalArrangement = Arrangement.spacedBy(16.dp)
-//        ){
-//            CategoryItem()
-//            CategoryItem()
-//            CategoryItem()
-//            CategoryItem()
-//        }
+        Row(
+            Modifier
+                .padding(8.dp)
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            collectAsState.list.forEach {
+                CategoryItem(it.name)
+            }
+        }
 
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .padding(16.dp), horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Text(text = "Latest Movie")
+            Text(text = "View all")
+        }
+
+        Row(
+            Modifier
+                .padding(8.dp)
+                .horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            collectAsState.imageList.forEach {
+                MovieSection(it.image)
+            }
+        }
     }
 }
 
-@Preview
 @Composable
-fun CategoryItem() {
-    Surface(
+fun MovieSection(image: String) {
+    Surface(shape = RoundedCornerShape(15.dp), shadowElevation = 4.dp) {
+        Column(
+            Modifier
+                .heightIn(250.dp, 300.dp)
+                .widthIn(200.dp)
+        ) {
+            Image(
+                modifier = Modifier.size(128.dp),
+                painter = rememberAsyncImagePainter(image),
+                contentDescription = null
+            )
+        }
+    }
+}
 
+@Composable
+fun CategoryItem(name: String) {
+    Surface(
         shape = RoundedCornerShape(15.dp),
         shadowElevation = 4.dp
     ) {
-//        Image(
-//            Modifier.padding(16.dp),
-//            painter = painterResource(id = R.drawable.ic_android_black),
-//            contentDescription = null
-//        )
-        Text(text = "Hollywood", fontSize = 15.sp)
+        Row() {
+            Image(
+                modifier = Modifier
+                    .size(20.dp)
+                    .clip(CircleShape)
+                    .background(Color.Green),
+                painter = painterResource(id = R.drawable.ic_android_black),
+                contentDescription = null
+            )
+
+            Text(text = name, fontSize = 15.sp)
+
+        }
     }
 }
 
@@ -122,7 +172,7 @@ fun CategoryItem() {
 @Composable
 fun GreetingPreview() {
     WorkoutTheme {
-        Greeting("Android")
+        //Greeting("Android")
     }
 }
 
@@ -130,6 +180,14 @@ fun GreetingPreview() {
 @Composable
 fun CategoryItemPreview() {
     WorkoutTheme {
-        CategoryItem()
+        //CategoryItem()
+    }
+}
+
+@Preview
+@Composable
+fun MovieSectionPreview() {
+    WorkoutTheme {
+        MovieSection("https://wger.de/media/exercise-images/91/Crunches-1.png")
     }
 }
